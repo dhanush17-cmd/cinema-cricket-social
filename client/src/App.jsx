@@ -1,217 +1,200 @@
-import { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+const stories = [
+  { name: 'RRR', accent: '#ff7b54' },
+  { name: 'NTR', accent: '#fbbf24' },
+  { name: 'Kantara', accent: '#34d399' },
+  { name: 'Pushpa', accent: '#60a5fa' },
+  { name: 'Shershaah', accent: '#c084fc' },
+  { name: 'Live', accent: '#f87171' }
+];
 
-const defaultForm = {
-  title: '',
-  genre: 'Action',
-  rating: 8,
-  review: '',
-  user: 'You'
-};
+const posts = [
+  {
+    id: 1,
+    user: 'Aarav',
+    handle: '@aaravcinema',
+    movie: 'RRR',
+    caption: 'Pure goosebumps from start to finish. The energy, music, and emotion hit hard!',
+    likes: '12.4k',
+    comments: 842,
+    image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=900&q=80',
+    badge: 'Top Rated'
+  },
+  {
+    id: 2,
+    user: 'Nisha',
+    handle: '@cricketpulse',
+    movie: 'Kantara',
+    caption: 'The cultural storytelling is unreal. Feels raw, powerful, and unforgettable.',
+    likes: '9.8k',
+    comments: 540,
+    image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=900&q=80',
+    badge: 'New Review'
+  },
+  {
+    id: 3,
+    user: 'Vikram',
+    handle: '@matchdaybuzz',
+    movie: 'Pushpa',
+    caption: 'Massy, stylish, and full of attitude. This one is perfect for a rewatch.',
+    likes: '15.2k',
+    comments: 920,
+    image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=900&q=80',
+    badge: 'Trending'
+  }
+];
 
-const socket = io({ autoConnect: false });
+const chatMessages = [
+  { user: 'Rohit', text: 'India is dominating this spell!', time: '19:30' },
+  { user: 'Aisha', text: 'That over was too expensive for the bowlers.', time: '19:31' },
+  { user: 'Karan', text: 'The crowd is absolutely buzzing tonight.', time: '19:32' },
+  { user: 'Meera', text: 'This is a classic chase situation now.', time: '19:33' }
+];
+
+const trendingTags = ['#RRR', '#CricketLive', '#Bollywood', '#MatchBuzz', '#MovieNight'];
 
 export default function App() {
-  const [posts, setPosts] = useState([]);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [form, setForm] = useState(defaultForm);
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPosts = async () => {
-      const response = await fetch('/api/posts');
-      const data = await response.json();
-      setPosts(data);
-      setLoading(false);
-    };
-
-    const fetchChat = async () => {
-      const response = await fetch('/api/live-chat');
-      const data = await response.json();
-      setChatMessages(data.messages);
-    };
-
-    fetchPosts();
-    fetchChat();
-
-    socket.connect();
-    socket.on('chat-message', (payload) => {
-      setChatMessages((prev) => [...prev, payload]);
-    });
-
-    return () => {
-      socket.off('chat-message');
-      socket.disconnect();
-    };
-  }, []);
-
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmitReview = async (event) => {
-    event.preventDefault();
-
-    const reviewPayload = {
-      ...form,
-      rating: Number(form.rating)
-    };
-
-    const response = await fetch('/api/posts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(reviewPayload)
-    });
-
-    const newPost = await response.json();
-    setPosts((prev) => [newPost, ...prev]);
-    setForm(defaultForm);
-  };
-
-  const handleSendMessage = (event) => {
-    event.preventDefault();
-
-    if (!message.trim()) return;
-
-    const payload = {
-      user: 'You',
-      text: message.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    socket.emit('chat-message', payload);
-    setChatMessages((prev) => [...prev, payload]);
-    setMessage('');
-  };
-
   return (
-    <div className="app-shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Social Studio</p>
-          <h1>Cinema Cricket Social</h1>
+    <div className="instagram-shell">
+      <header className="top-nav">
+        <div className="brand-wrap">
+          <div className="brand-mark">C</div>
+          <div>
+            <p className="brand-label">Cinema</p>
+            <h1>CricFlix</h1>
+          </div>
         </div>
-        <div className="topbar-actions">
-          <button className="pill primary">Trending</button>
-          <button className="pill">Live Match</button>
+
+        <div className="search-box">
+          <span>⌕</span>
+          <input placeholder="Search movies, players, trends" />
+        </div>
+
+        <div className="nav-actions">
+          <button className="nav-btn active">Home</button>
+          <button className="nav-btn">Reels</button>
+          <button className="nav-btn">Messages</button>
+          <button className="nav-btn profile-pill">Profile</button>
         </div>
       </header>
 
-      <main className="content-grid">
-        <section className="main-panel">
-          <div className="section-header">
-            <h2>Movie Reviews</h2>
-            <span>{posts.length} posts</span>
+      <main className="main-layout">
+        <section className="feed-column">
+          <div className="story-row">
+            {stories.map((story) => (
+              <div key={story.name} className="story">
+                <div className="story-ring" style={{ background: story.accent }}>
+                  <div className="story-avatar" />
+                </div>
+                <span>{story.name}</span>
+              </div>
+            ))}
           </div>
 
-          <form className="review-form" onSubmit={handleSubmitReview}>
-            <div className="row">
-              <input
-                name="title"
-                placeholder="Movie title"
-                value={form.title}
-                onChange={handleInputChange}
-                required
-              />
-              <select name="genre" value={form.genre} onChange={handleInputChange}>
-                <option>Action</option>
-                <option>Drama</option>
-                <option>Comedy</option>
-                <option>Thriller</option>
-                <option>Fantasy</option>
-              </select>
-            </div>
-
-            <div className="row">
-              <input
-                name="user"
-                placeholder="Your name"
-                value={form.user}
-                onChange={handleInputChange}
-              />
-              <input
-                name="rating"
-                type="number"
-                min="1"
-                max="10"
-                value={form.rating}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <textarea
-              name="review"
-              placeholder="Write your review..."
-              value={form.review}
-              onChange={handleInputChange}
-              required
-            />
-
-            <button className="primary-btn" type="submit">Post Review</button>
-          </form>
-
-          <div className="posts-list">
-            {loading ? (
-              <p>Loading posts...</p>
-            ) : (
-              posts.map((post) => (
-                <article className="post-card" key={post.id}>
-                  <div className="post-header">
-                    <div>
-                      <h3>{post.title}</h3>
-                      <p>{post.user}</p>
-                    </div>
-                    <span className="rating-badge">⭐ {post.rating}/10</span>
-                  </div>
-                  <div className="tag-row">
-                    <span>{post.genre}</span>
-                  </div>
-                  <p className="post-body">{post.review}</p>
-                </article>
-              ))
-            )}
+          <div className="composer">
+            <div className="composer-avatar" />
+            <input placeholder="Share your movie review or match opinion..." />
+            <button>Post</button>
           </div>
+
+          {posts.map((post) => (
+            <article key={post.id} className="post-card">
+              <div className="post-header">
+                <div className="user-meta">
+                  <div className="avatar small" />
+                  <div>
+                    <h3>{post.user}</h3>
+                    <p>{post.handle}</p>
+                  </div>
+                </div>
+                <span className="post-badge">{post.badge}</span>
+              </div>
+
+              <img className="post-image" src={post.image} alt={post.movie} />
+
+              <div className="post-actions">
+                <span>♡</span>
+                <span>💬</span>
+                <span>✈</span>
+                <span className="save">🔖</span>
+              </div>
+
+              <div className="post-content">
+                <p className="likes">{post.likes} likes</p>
+                <p>
+                  <strong>{post.user}</strong> {post.caption}
+                </p>
+                <p className="comment-link">View all {post.comments} comments</p>
+              </div>
+            </article>
+          ))}
         </section>
 
-        <aside className="side-panel">
-          <div className="chat-box">
-            <div className="section-header">
-              <h2>Cricket Live Chat</h2>
-              <span>India vs Australia</span>
+        <aside className="sidebar-column">
+          <div className="profile-card">
+            <div className="profile-head">
+              <div className="avatar large" />
+              <div>
+                <h3>@cinemacric</h3>
+                <p>Movie + Match Community</p>
+              </div>
+            </div>
+            <div className="stats-row">
+              <div><strong>8.4K</strong><span>Followers</span></div>
+              <div><strong>1.2K</strong><span>Posts</span></div>
+              <div><strong>496</strong><span>Matches</span></div>
+            </div>
+          </div>
+
+          <div className="match-card">
+            <div className="match-header">
+              <div>
+                <p className="tiny-tag">LIVE</p>
+                <h3>India vs Australia</h3>
+              </div>
+              <span className="live-dot" />
             </div>
 
-            <div className="messages">
-              {chatMessages.map((item, index) => (
-                <div className="message" key={`${item.user}-${item.time}-${index}`}>
-                  <strong>{item.user}</strong>
-                  <span>{item.time}</span>
-                  <p>{item.text}</p>
+            <div className="score-row">
+              <div>
+                <strong>India</strong>
+                <span>186/4</span>
+              </div>
+              <div className="versus">VS</div>
+              <div>
+                <strong>Aus</strong>
+                <span>172/8</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="chat-card">
+            <div className="chat-header">
+              <h3>Cricket Live Chat</h3>
+              <span>12k online</span>
+            </div>
+
+            <div className="message-list">
+              {chatMessages.map((message, index) => (
+                <div className="chat-message" key={`${message.user}-${index}`}>
+                  <strong>{message.user}</strong>
+                  <span>{message.time}</span>
+                  <p>{message.text}</p>
                 </div>
               ))}
             </div>
 
-            <form className="chat-form" onSubmit={handleSendMessage}>
-              <input
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                placeholder="Write your match comment..."
-              />
-              <button type="submit">Send</button>
-            </form>
+            <div className="chat-input-row">
+              <input placeholder="Say something about the match..." />
+              <button>Send</button>
+            </div>
           </div>
 
-          <div className="mini-cards">
-            <div className="mini-card">
-              <span>Top Movie</span>
-              <strong>RRR</strong>
-            </div>
-            <div className="mini-card">
-              <span>Live Score</span>
-              <strong>186/4</strong>
+          <div className="trend-card">
+            <h3>Trending now</h3>
+            <div className="tags-list">
+              {trendingTags.map((tag) => (
+                <span key={tag}>{tag}</span>
+              ))}
             </div>
           </div>
         </aside>

@@ -1,0 +1,94 @@
+const express = require('express');
+const http = require('http');
+const cors = require('cors');
+const { Server } = require('socket.io');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*'
+  }
+});
+
+app.use(cors());
+app.use(express.json());
+
+const posts = [
+  {
+    id: 1,
+    title: 'RRR',
+    user: 'Riya',
+    genre: 'Action',
+    rating: 9,
+    review: 'A cinematic blast with great energy, emotion, and action choreography. One of the best film experiences of the year.'
+  },
+  {
+    id: 2,
+    title: '3 Idiots',
+    user: 'Arun',
+    genre: 'Comedy',
+    rating: 9,
+    review: 'Funny, emotional, and deeply relatable for students and families alike.'
+  },
+  {
+    id: 3,
+    title: 'Kantara',
+    user: 'Meera',
+    genre: 'Drama',
+    rating: 8,
+    review: 'Beautifully rooted in culture, with a magical sense of atmosphere and strong performances.'
+  }
+];
+
+const liveChatMessages = [
+  { user: 'Aman', text: 'This over is huge. The momentum is totally shifting!', time: '19:30' },
+  { user: 'Nisha', text: 'India needs a boundary here...', time: '19:31' },
+  { user: 'Vikram', text: 'Crowd is electric tonight!', time: '19:31' }
+];
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Cinema Cricket Social API is running' });
+});
+
+app.get('/api/posts', (req, res) => {
+  res.json(posts);
+});
+
+app.post('/api/posts', (req, res) => {
+  const { title, genre, rating, review, user } = req.body;
+
+  const newPost = {
+    id: Date.now(),
+    title,
+    genre,
+    rating,
+    review,
+    user: user || 'Guest'
+  };
+
+  posts.unshift(newPost);
+  res.status(201).json(newPost);
+});
+
+app.get('/api/live-chat', (req, res) => {
+  res.json({ messages: liveChatMessages });
+});
+
+io.on('connection', (socket) => {
+  socket.on('chat-message', (payload) => {
+    const message = {
+      user: payload.user || 'Guest',
+      text: payload.text,
+      time: payload.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    liveChatMessages.push(message);
+    io.emit('chat-message', message);
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+});
